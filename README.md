@@ -1,3 +1,9 @@
+# ci-cd-final-project
+
+Project name: Continuous Integration and Continuous Delivery Final Project
+
+A counter microservice with GitHub Actions CI and an OpenShift Tekton pipeline: cleanup, git-clone, flake8, nose, buildah, deploy.
+
 # CI/CD Tools and Practices Final Project Template
 
 This repository contains the template to be used for the Final Project for the Coursera course **CI/CD Tools and Practices**.

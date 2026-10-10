@@ -1,0 +1,63 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: cleanup
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: remove
+      image: alpine:3.18
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/bin/sh
+        set -eu
+        echo "Removing existing source files"
+        find . -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: flake8
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: lint
+      image: python:3.9-slim
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: HOME
+          value: /tmp
+      script: |
+        #!/bin/sh
+        set -eu
+        python -m venv /tmp/lint-env
+        /tmp/lint-env/bin/pip install -r requirements.txt
+        /tmp/lint-env/bin/flake8 service tests --count --select=E9,F63,F7,F82 --show-source --statistics
+        /tmp/lint-env/bin/flake8 service tests --count --max-complexity=10 --max-line-length=127 --statistics
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: nose
+spec:
+  workspaces:
+    - name: source
+  params:
+    - name: args
+      type: string
+      default: "-v --with-spec --spec-color --with-coverage --cover-package=service"
+  steps:
+    - name: test
+      image: python:3.9-slim
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: HOME
+          value: /tmp
+      script: |
+        #!/bin/sh
+        set -eu
+        python -m venv /tmp/test-env
+        /tmp/test-env/bin/pip install -r requirements.txt
+        /tmp/test-env/bin/nosetests $(params.args)
